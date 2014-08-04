@@ -1,8 +1,6 @@
 ///<reference path="./d.ts/node.d.ts" />
 ///<reference path="./d.ts/socket.io.d.ts" />
 ///<reference path="./d.ts/express.d.ts" />
-///<reference path="./server/game.ts" />
-
 
 import express = require('express');
 import http = require('http');
@@ -11,6 +9,7 @@ import game = require('./server/game');
 var app = express();
 var server = http.createServer(app);
 var socketServer = io.listen(server); 
+var window = {};
 
 
 app.use(express.static(__dirname + '/client'));

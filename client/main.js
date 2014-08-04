@@ -61,7 +61,7 @@ var ProjectUtopia;
             }
             Menu.prototype.create = function () {
                 var _this = this;
-                this.background = this.add.sprite(80, 0, 'menu-background');
+                this.background = this.add.sprite(0, 0, 'menu-background');
                 this.input.onDown.addOnce(function () {
                     _this.game.state.start('main');
                 });
@@ -75,17 +75,17 @@ var ProjectUtopia;
 var ProjectUtopia;
 (function (ProjectUtopia) {
     (function (State) {
-        var Main = (function (_super) {
-            __extends(Main, _super);
-            function Main() {
+        var World = (function (_super) {
+            __extends(World, _super);
+            function World() {
                 _super.apply(this, arguments);
             }
-            Main.prototype.create = function () {
+            World.prototype.create = function () {
                 this.stage.backgroundColor = 0x000000;
             };
-            return Main;
+            return World;
         })(Phaser.State);
-        State.Main = Main;
+        State.World = World;
     })(ProjectUtopia.State || (ProjectUtopia.State = {}));
     var State = ProjectUtopia.State;
 })(ProjectUtopia || (ProjectUtopia = {}));
@@ -99,7 +99,7 @@ var ProjectUtopia;
             this.state.add('boot', ProjectUtopia.State.Boot);
             this.state.add('preload', ProjectUtopia.State.Preload);
             this.state.add('menu', ProjectUtopia.State.Menu);
-            this.state.add('main', ProjectUtopia.State.Main);
+            this.state.add('world', ProjectUtopia.State.World);
 
             this.state.start('boot');
         }
