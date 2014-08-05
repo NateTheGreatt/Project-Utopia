@@ -7,6 +7,8 @@ var server = http.createServer(app);
 var socketServer = io.listen(server);
 var window = {};
 
+console.log(Phaser);
+
 app.use(express.static(__dirname + '/client'));
 
 app.get('/', function (req, res) {
