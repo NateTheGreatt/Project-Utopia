@@ -63,7 +63,7 @@ var ProjectUtopia;
                 var _this = this;
                 this.background = this.add.sprite(0, 0, 'menu-background');
                 this.input.onDown.addOnce(function () {
-                    _this.game.state.start('main');
+                    _this.game.state.start('world');
                 });
             };
             return Menu;
@@ -93,13 +93,21 @@ var ProjectUtopia;
 (function (ProjectUtopia) {
     var Game = (function (_super) {
         __extends(Game, _super);
-        function Game() {
+        function Game(socket) {
             _super.call(this, 640, 480, Phaser.AUTO, 'game-div');
 
             this.state.add('boot', ProjectUtopia.State.Boot);
             this.state.add('preload', ProjectUtopia.State.Preload);
             this.state.add('menu', ProjectUtopia.State.Menu);
             this.state.add('world', ProjectUtopia.State.World);
+
+            Game.socket = socket;
+            Game.socket.on('connect', function () {
+                console.log('Socket Connected with sessionId: ' + Game.socket.io.engine.id);
+            });
+            Game.socket.on('disconnect', function () {
+                console.log('Socket disconnected');
+            });
 
             this.state.start('boot');
         }
@@ -109,6 +117,7 @@ var ProjectUtopia;
 })(ProjectUtopia || (ProjectUtopia = {}));
 
 window.onload = function () {
-    var game = new ProjectUtopia.Game();
+    var socketio = io.connect('https://project-utopia-c9-natethegreatt.c9.io');
+    var game = new ProjectUtopia.Game(socketio);
 };
 //# sourceMappingURL=main.js.map

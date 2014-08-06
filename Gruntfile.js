@@ -6,11 +6,19 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-nodemon');
   grunt.loadNpmTasks('grunt-concurrent');
+  grunt.loadNpmTasks('grunt-simple-mocha');
+  grunt.loadNpmTasks('grunt-express-server');
 
   grunt.initConfig({
     concurrent: {
       client: ['watch','nodemon'],
       options: {logConcurrentOutput: true}
+    },
+    simplemocha: {
+      all: {
+        src: ['tests/**/*.js'],
+        timeout: 6000
+      }
     },
     typescript: {
       client: {
@@ -22,43 +30,37 @@ module.exports = function(grunt) {
         }
       },
       server: {
-        src: ['server/**/*.ts', 'server.ts'],
-        dest: 'server.js',
+        src: ['server.ts'],
         options: {
           sourceMap: true,
           module: 'commonjs'
         }
-      }
+      },
+      game: {
+        src: ['server/*.ts'],
+        options: {
+          sourceMap: true,
+          module: 'commonjs'
+        }
+      },
+      tests: {
+        src: ['tests/tests.ts'],
+        dest: 'tests/tests.js',
+        options: {
+          sourceMap: true,
+          module: 'commonjs'
+        }
+      },
     },
     nodemon: {
       server: {
         script: 'server.js'
       }
     },
-    copy: {
-      client: {
-        files: [
-          {
-            cwd: 'app',
-            expand: true,
-            src: ['**/*.html', '!vendor/**/*.html', 'assets/**/*'],
-            dest: 'build/'
-          }
-        ]
-      }
-    },
-    open: {
-      client: {
-        path: 'http://localhost:3000'
-      }
-    },
-    connect: {
-      client: {
+    express: {
+      server:{
         options: {
-          port: 1337,
-          hostname: '*',
-          base: 'build',
-          livereload: true
+          script: 'server.js'
         }
       }
     },
@@ -71,8 +73,8 @@ module.exports = function(grunt) {
         }
       },
       server: {
-        files: ['server/*.ts', '*.ts'],
-        tasks: ['typescript:server'],
+        files: ['server.ts','server/*.ts', 'tests/*.ts'],
+        tasks: ['typescript:server', 'typescript:tests'],
         options: {
           livereload: true
         }
@@ -80,6 +82,9 @@ module.exports = function(grunt) {
     }
   });
 
-  grunt.registerTask('default', ['concurrent']);
-  // grunt.registerTask('default', ['typescript', 'copy', 'open', 'connect', 'watch']);
-}
+  grunt.registerTask('default', ['concurrent:client']);
+  grunt.registerTask('test', ['typescript:tests', 'simplemocha']);
+  grunt.registerTask('compile', ['typescript']);
+  
+
+};
