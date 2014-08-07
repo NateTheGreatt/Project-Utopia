@@ -1,2 +1,3 @@
 node_modules/*
 client/vendor/phaser-official/
+.c9/*

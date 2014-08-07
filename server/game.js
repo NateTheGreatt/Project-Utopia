@@ -15,9 +15,10 @@ var Game = (function () {
             client.on('disconnect', function (payload) {
             });
             client.on('newPlayer', function (payload) {
+                console.log('newPlayer event');
                 var eggBoy = new Player(payload.x, payload.y, payload.id);
                 game.players.push(eggBoy);
-                client.emit('player joined', payload);
+                game.io.sockets.emit('player joined', payload);
             });
             client.on('movePlayer', function (payload) {
                 console.log(game.players[0]);
