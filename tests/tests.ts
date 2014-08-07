@@ -5,7 +5,7 @@
 import io = require('socket.io-client');
 import should = require('should');
 
-[io,should];
+[io,should]; // have to use "should" somewhere so the TS compiler doesn't strip it as an unused variable
 
 var socketURL = 'https://project-utopia-c9-natethegreatt.c9.io';
 
@@ -16,8 +16,6 @@ var options = {
 
 var player1 = {id: 1234, name: "Jillian Sticky Arms", x: 5, y: 5};
 var player2 = {id: 1235, name: "Steven Sloppy Slacks", x: 6, y: 6};
-var testPlayer = {'name': 'Sloppy Boy'};
-var test = 'test';
 		
 describe('game server', function() {
   this.timeout(15000);
@@ -67,6 +65,7 @@ describe('game server', function() {
 			client1.on('player joined', function(payload) {
 				payload.should.have.property('name', player2.name);
 				client1.disconnect();
+				client2.disconnect();
 				done();
 			});
 			
