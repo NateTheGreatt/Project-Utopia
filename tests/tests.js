@@ -56,14 +56,18 @@ describe('game server', function () {
         var array = [];
 
         for (var i = 0; i < iterations; i++) {
-            var dirKey = Math.floor(Math.random() * 3);
+            var dirKey = Math.round(Math.random() * 3);
 
             array.push(movements[dirKey]);
 
             client1.emit('movePlayer', { id: randomPlayer.id, directions: [movements[dirKey]] });
+            console.log(movements[dirKey]);
         }
         client1.on('player moved', function (payload) {
+            console.log(payload.x, payload.y);
+
             iterations--;
+
             if (iterations == 0) {
                 for (var i = 0; i < array.length; i++) {
                     if (array[i] == 'up')
@@ -74,9 +78,9 @@ describe('game server', function () {
                         randomPlayer.x -= speed;
                     if (array[i] == 'right')
                         randomPlayer.x += speed;
+                    console.log('client', randomPlayer.x, randomPlayer.y);
                 }
-                console.log(payload.x, payload.y);
-                console.log(randomPlayer.x, randomPlayer.y);
+
                 payload.x.should.equal(randomPlayer.x);
                 payload.y.should.equal(randomPlayer.y);
                 client1.disconnect();

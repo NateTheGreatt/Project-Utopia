@@ -69,15 +69,17 @@ describe('game server', function() {
 		for(var i=0;i<iterations;i++) {
 			
 			// get random direction from array
-			var dirKey = Math.floor(Math.random()*3);
+			var dirKey = Math.round(Math.random()*3);
 			
 			// store key presses for later, after the server applies them
 			array.push(movements[dirKey]);
 			
 			// send randomly generated key presses to server
 			client1.emit('movePlayer', {id: randomPlayer.id, directions: [movements[dirKey]]});
+			console.log(movements[dirKey]);
 		}
 		client1.on('player moved', function(payload) {
+			console.log(payload.x, payload.y);
 			
 			// make sure we get back the same amount of packets that we sent
 			iterations--;
@@ -89,6 +91,7 @@ describe('game server', function() {
 					if(array[i] == 'down') randomPlayer.y += speed;
 					if(array[i] == 'left') randomPlayer.x -= speed;
 					if(array[i] == 'right') randomPlayer.x += speed;
+					console.log('client', randomPlayer.x, randomPlayer.y);
 				}
 				// check if the coordinates check out
 				payload.x.should.equal(randomPlayer.x);

@@ -6,6 +6,90 @@ var __extends = this.__extends || function (d, b) {
 };
 var ProjectUtopia;
 (function (ProjectUtopia) {
+    (function (_Entity) {
+        var Entity = (function (_super) {
+            __extends(Entity, _super);
+            function Entity(game, x, y, id, name) {
+                if (typeof name === "undefined") { name = 'Entity'; }
+                _super.call(this, game, x, y, 'entity');
+                this.game = game;
+                this.id = id;
+                this.name = name;
+                this.exists = false;
+            }
+            Entity.prototype.update = function () {
+            };
+            return Entity;
+        })(Phaser.Sprite);
+        _Entity.Entity = Entity;
+    })(ProjectUtopia.Entity || (ProjectUtopia.Entity = {}));
+    var Entity = ProjectUtopia.Entity;
+})(ProjectUtopia || (ProjectUtopia = {}));
+var ProjectUtopia;
+(function (ProjectUtopia) {
+    (function (Entity) {
+        var Player = (function (_super) {
+            __extends(Player, _super);
+            function Player(game, x, y) {
+                if (this.getHtmlName())
+                    var name = this.getHtmlName();
+                else
+                    var name = 'player';
+                _super.call(this, game, x, y, ProjectUtopia.Game.socket.io.engine.id, name);
+
+                this.upKey = this.game.input.keyboard.addKey(Phaser.Keyboard.W);
+                this.downKey = this.game.input.keyboard.addKey(Phaser.Keyboard.S);
+                this.leftKey = this.game.input.keyboard.addKey(Phaser.Keyboard.A);
+                this.rightKey = this.game.input.keyboard.addKey(Phaser.Keyboard.D);
+
+                this.exists = true;
+                game.add.existing(this);
+
+                ProjectUtopia.Game.socket.emit('newPlayer', this.packet());
+            }
+            Player.prototype.update = function () {
+                this.controls();
+
+                var htmlName = this.getHtmlName();
+                if (htmlName != this.name)
+                    this.name = htmlName;
+
+                this.prevX = this.x;
+                this.prevY = this.y;
+
+                _super.prototype.update.call(this);
+            };
+
+            Player.prototype.getHtmlName = function () {
+                return document.getElementById('name').value;
+            };
+
+            Player.prototype.controls = function () {
+                if (this.upKey.isDown || this.downKey.isDown || this.leftKey.isDown || this.rightKey.isDown) {
+                    ProjectUtopia.Game.socket.emit('movePlayer', {
+                        id: this.id,
+                        up: this.upKey.isDown,
+                        down: this.downKey.isDown,
+                        left: this.leftKey.isDown,
+                        right: this.rightKey.isDown
+                    });
+                }
+
+                if (this.game.input.mousePointer.isDown) {
+                }
+            };
+
+            Player.prototype.packet = function () {
+                return { x: this.x, y: this.y, id: ProjectUtopia.Game.socket.io.engine.id, name: this.name };
+            };
+            return Player;
+        })(Entity.Entity);
+        Entity.Player = Player;
+    })(ProjectUtopia.Entity || (ProjectUtopia.Entity = {}));
+    var Entity = ProjectUtopia.Entity;
+})(ProjectUtopia || (ProjectUtopia = {}));
+var ProjectUtopia;
+(function (ProjectUtopia) {
     (function (State) {
         var Boot = (function (_super) {
             __extends(Boot, _super);
@@ -82,6 +166,75 @@ var ProjectUtopia;
             }
             World.prototype.create = function () {
                 this.stage.backgroundColor = 0x000000;
+                this.stage.disableVisibilityChange = true;
+
+                this.entityPool = [];
+                this.worldGroup = this.game.add.group();
+                for (var i = 0; i < 100; i++)
+                    this.entityPool.push(new ProjectUtopia.Entity.Entity(this.game, 0, 0, 'entity'));
+                this.player = new ProjectUtopia.Entity.Player(this.game, 10, 10);
+
+                this.setEventHandlers();
+            };
+
+            World.prototype.update = function () {
+                this.scanEntityPool();
+            };
+
+            World.prototype.scanEntityPool = function () {
+                for (var i = this.entityPool.length - 1; i >= 0; i--) {
+                    if (this.entityPool[i].exists)
+                        this.spawnEntity(i);
+                }
+            };
+
+            World.prototype.spawnEntity = function (i) {
+                this.worldGroup.add(this.entityPool.splice(i, 1)[0]);
+            };
+
+            World.prototype.setEventHandlers = function () {
+                var main = this;
+
+                ProjectUtopia.Game.socket.on('player joined', function (data) {
+                    console.log('Player ' + data.name + ' entered world: (' + data.x + ',' + data.y + ') ' + data.id);
+
+                    for (var i = 0; i < main.entityPool.length; i++) {
+                        if (!main.entityPool[i].exists) {
+                            console.log('new guy');
+                            main.entityPool[i].id = data.id;
+                            main.entityPool[i].name = data.name;
+
+                            main.entityPool[i].x = data.x;
+                            main.entityPool[i].y = data.y;
+                            main.entityPool[i].exists = true;
+                            break;
+                        }
+                    }
+                });
+
+                ProjectUtopia.Game.socket.on('player moved', function (data) {
+                    if (data.id == ProjectUtopia.Game.socket.io.engine.id) {
+                        main.player.x = data.x;
+                        main.player.y = data.y;
+                    } else {
+                        main.worldGroup.forEach(function (ent) {
+                            if (data.id == ent.id) {
+                                ent.x = data.x;
+                                ent.y = data.y;
+                                ent.name = data.name;
+                            }
+                        }, 'this', true);
+                    }
+                });
+
+                ProjectUtopia.Game.socket.on('remove player', function (data) {
+                    main.worldGroup.forEach(function (ent) {
+                        if (data.id == ent.id) {
+                            ent.kill();
+                            console.log(ent.name + ' left the server');
+                        }
+                    }, 'this', true);
+                });
             };
             return World;
         })(Phaser.State);

@@ -9,6 +9,11 @@ class Entity {
   
   speed: number = 5;
   
+  up: number;
+  down: number;
+  left: number;
+  right: number;
+  
   id: string;
   name: string;
   
@@ -19,7 +24,12 @@ class Entity {
     this.y = y;
     this.id = id;
     this.io = io;
-    console.log('Entity '+id+' entered the world at ('+x+','+y+')')
+    console.log('Entity '+id+' entered the world at ('+x+','+y+')');
+    
+    this.up = 0;
+    this.down = 0;
+    this.left = 0;
+    this.right = 0;
   }
   
   moveTo(x:number, y:number) {
@@ -27,12 +37,11 @@ class Entity {
     this.y = y;
   }
   
-  move(directions) {
-    if(directions.indexOf('up') > -1) this.y -= this.speed;
-    if(directions.indexOf('down') > -1) this.y += this.speed;
-    if(directions.indexOf('left') > -1) this.x -= this.speed;
-    if(directions.indexOf('right') > -1) this.x += this.speed;
-    this.io.sockets.emit('player moved', {x: this.x, y: this.y, id: this.id});
+  direct(directions) {
+    if(directions.up) this.up++;
+    if(directions.down) this.down++;
+    if(directions.left) this.left++;
+    if(directions.right) this.right++;
   }
   
   setName(n) {
@@ -40,7 +49,39 @@ class Entity {
   }
   
   update() {
-    
+    this.applyMovement();
+  }
+  
+  applyMovement() {
+    var changed = false;
+    if(this.up > 0) {
+      this.y -= this.speed;
+      this.up--;
+      changed = true;
+      console.log('up');
+    }
+    if(this.down > 0) {
+      this.y += this.speed;
+      this.down--;
+      changed = true;
+      console.log('down');
+    }
+    if(this.left > 0) {
+      this.x -= this.speed;
+      this.left--;
+      changed = true;
+      console.log('left');
+    }
+    if(this.right > 0) {
+      this.x += this.speed;
+      this.right--;
+      changed = true;
+      console.log('right');
+    }
+    if(changed) {
+      console.log(this.id, this.x, this.y);
+      this.io.sockets.emit('player moved', {x: this.x, y: this.y, id: this.id});
+    }
   }
   
   packet() {

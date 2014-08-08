@@ -27,15 +27,16 @@ class Game {
     
       client.on('disconnect', function(payload) {
         game.removeClient(payload.id);
+        client.broadcast.emit('remove player', {id: client.id});
       });
       client.on('newPlayer', function(payload) {
         var eggBoy: Entity = new Entity(payload.x, payload.y, <string>payload.id, game.io);
         game.entities.push(eggBoy);
-        game.io.sockets.emit('player joined', payload);
+        client.broadcast.emit('player joined', payload);
       });
       client.on('movePlayer', function(payload) {
         var player = game.entityById(payload.id);
-        player.move(payload.directions);
+        player.direct(payload);
       });
 
     });
@@ -70,6 +71,13 @@ class Game {
   update(delta) {
     /*this.processInputs();
     this.sendWorldState();*/
+    this.updateEntities();
+  }
+  
+  updateEntities() {
+    for(var i=0;i<this.entities.length;i++) {
+      this.entities[i].update();
+    }
   }
   
 }
