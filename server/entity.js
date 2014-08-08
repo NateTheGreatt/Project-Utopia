@@ -15,13 +15,13 @@ var Entity = (function () {
 
     Entity.prototype.move = function (directions) {
         if (directions.indexOf('up') > -1)
-            this.x -= this.speed;
-        if (directions.indexOf('down') > -1)
-            this.x += this.speed;
-        if (directions.indexOf('left') > -1)
             this.y -= this.speed;
-        if (directions.indexOf('right') > -1)
+        if (directions.indexOf('down') > -1)
             this.y += this.speed;
+        if (directions.indexOf('left') > -1)
+            this.x -= this.speed;
+        if (directions.indexOf('right') > -1)
+            this.x += this.speed;
         this.io.sockets.emit('player moved', { x: this.x, y: this.y, id: this.id });
         console.log('player moved: (' + this.x + ',' + this.y + ')');
     };

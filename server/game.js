@@ -22,7 +22,7 @@ var Game = (function () {
                 game.removeClient(payload.id);
             });
             client.on('newPlayer', function (payload) {
-                console.log('newPlayer event');
+                console.log('newPlayer event', payload.x, payload.y);
                 var eggBoy = new Entity(payload.x, payload.y, payload.id, game.io);
                 game.entities.push(eggBoy);
                 game.io.sockets.emit('player joined', payload);

@@ -37,26 +37,48 @@ describe('game server', function () {
     it('should move player', function (done) {
         var client1 = io.connect(socketURL, options);
 
+        var randomPlayer = {
+            id: Math.floor(Math.random() * 100),
+            name: 'bob',
+            x: Math.floor(Math.random() * 100),
+            y: Math.floor(Math.random() * 100)
+        };
+
         client1.on('connect', function (payload) {
-            client1.emit('newPlayer', player1);
+            client1.emit('newPlayer', randomPlayer);
         });
 
         var speed = 5;
 
         var iterations = 5;
 
+        var movements = ['up', 'down', 'left', 'right'];
+        var array = [];
+
         for (var i = 0; i < iterations; i++) {
-            client1.emit('movePlayer', { id: player1.id, directions: ['down', 'right'] });
+            var dirKey = Math.floor(Math.random() * 3);
 
-            player1.x += speed;
-            player1.y += speed;
+            array.push(movements[dirKey]);
+
+            client1.emit('movePlayer', { id: randomPlayer.id, directions: [movements[dirKey]] });
         }
-
         client1.on('player moved', function (payload) {
             iterations--;
             if (iterations == 0) {
-                payload.x.should.equal(player1.x);
-                payload.y.should.equal(player1.y);
+                for (var i = 0; i < array.length; i++) {
+                    if (array[i] == 'up')
+                        randomPlayer.y -= speed;
+                    if (array[i] == 'down')
+                        randomPlayer.y += speed;
+                    if (array[i] == 'left')
+                        randomPlayer.x -= speed;
+                    if (array[i] == 'right')
+                        randomPlayer.x += speed;
+                }
+                console.log(payload.x, payload.y);
+                console.log(randomPlayer.x, randomPlayer.y);
+                payload.x.should.equal(randomPlayer.x);
+                payload.y.should.equal(randomPlayer.y);
                 client1.disconnect();
                 done();
             }
