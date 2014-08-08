@@ -33,6 +33,10 @@ class Game {
         var eggBoy: Entity = new Entity(payload.x, payload.y, <string>payload.id, game.io);
         game.entities.push(eggBoy);
         client.broadcast.emit('player joined', payload);
+        for(var i=0;i<game.entities.length;i++) {
+          var e = game.entities[i];
+          if(e.id != client.id) client.emit('player joined', {id: e.id, x: e.x, y: e.y});
+        }
       });
       client.on('movePlayer', function(payload) {
         var player = game.entityById(payload.id);
