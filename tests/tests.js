@@ -12,11 +12,9 @@ var options = {
 
 var player1 = { id: 1234, name: "Jillian Sticky Arms", x: 5, y: 5 };
 var player2 = { id: 1235, name: "Steven Sloppy Slacks", x: 6, y: 6 };
-var testPlayer = { 'name': 'Sloppy Boy' };
-var test = 'test';
 
 describe('game server', function () {
-    this.timeout(15000);
+    this.timeout(5000);
 
     it('should spawn player', function (done) {
         var client1 = io.connect(socketURL, options);
@@ -39,19 +37,33 @@ describe('game server', function () {
     it('should move player', function (done) {
         var client1 = io.connect(socketURL, options);
 
-        player1.x += 5;
-        player1.y += 5;
-        client1.emit('movePlayer', player1);
+        client1.on('connect', function (payload) {
+            client1.emit('newPlayer', player1);
+        });
+
+        var speed = 5;
+
+        var iterations = 5;
+
+        for (var i = 0; i < iterations; i++) {
+            client1.emit('movePlayer', { id: player1.id, directions: ['down', 'right'] });
+
+            player1.x += speed;
+            player1.y += speed;
+        }
 
         client1.on('player moved', function (payload) {
-            payload.x.should.eql(10);
-            payload.y.should.eql(10);
-            client1.disconnect();
-            done();
+            iterations--;
+            if (iterations == 0) {
+                payload.x.should.equal(player1.x);
+                payload.y.should.equal(player1.y);
+                client1.disconnect();
+                done();
+            }
         });
     });
 
-    it('should show another player spawning', function (done) {
+    it('should tell client about another player spawning', function (done) {
         var client1 = io.connect(socketURL, options);
 
         client1.on('connect', function (payload) {
@@ -61,6 +73,7 @@ describe('game server', function () {
             client1.on('player joined', function (payload) {
                 payload.should.have.property('name', player2.name);
                 client1.disconnect();
+                client2.disconnect();
                 done();
             });
         });

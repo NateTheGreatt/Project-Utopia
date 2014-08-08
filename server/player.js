@@ -1,15 +1,18 @@
-var Player = (function () {
-    function Player(x, y, id) {
-        this.x = x;
-        this.y = y;
-        this.id = id;
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var Entity = require('./entity');
+
+var Player = (function (_super) {
+    __extends(Player, _super);
+    function Player() {
+        _super.apply(this, arguments);
     }
-    Player.prototype.moveTo = function (x, y) {
-        this.x = x;
-        this.y = y;
-    };
     return Player;
-})();
+})(Entity);
 
 module.exports = Player;
 //# sourceMappingURL=player.js.map

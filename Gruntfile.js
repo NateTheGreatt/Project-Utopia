@@ -73,8 +73,15 @@ module.exports = function(grunt) {
         }
       },
       server: {
-        files: ['server.ts','server/*.ts', 'tests/*.ts'],
-        tasks: ['typescript:server', 'typescript:tests'],
+        files: ['server.ts'],
+        tasks: ['typescript:server'],
+        options: {
+          livereload: true
+        }
+      },
+      game: {
+        files: ['server/*.ts'],
+        tasks: ['typescript:game'],
         options: {
           livereload: true
         }
@@ -85,6 +92,9 @@ module.exports = function(grunt) {
   grunt.registerTask('default', ['concurrent:client']);
   grunt.registerTask('test', ['typescript:tests', 'simplemocha']);
   grunt.registerTask('compile', ['typescript']);
+  grunt.registerTask('compileClient', ['typescript:client']);
+  grunt.registerTask('compileServer', ['typescript:server']);
+  grunt.registerTask('compileGame', ['typescript:game']);
   
 
 };
