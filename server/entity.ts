@@ -19,6 +19,7 @@ class Entity {
     this.y = y;
     this.id = id;
     this.io = io;
+    console.log('Entity '+id+' entered the world at ('+x+','+y+')')
   }
   
   moveTo(x:number, y:number) {
@@ -32,7 +33,6 @@ class Entity {
     if(directions.indexOf('left') > -1) this.x -= this.speed;
     if(directions.indexOf('right') > -1) this.x += this.speed;
     this.io.sockets.emit('player moved', {x: this.x, y: this.y, id: this.id});
-    console.log('player moved: ('+this.x+','+this.y+')')
   }
   
   setName(n) {

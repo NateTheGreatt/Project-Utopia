@@ -29,7 +29,6 @@ class Game {
         game.removeClient(payload.id);
       });
       client.on('newPlayer', function(payload) {
-        console.log('newPlayer event', payload.x, payload.y);
         var eggBoy: Entity = new Entity(payload.x, payload.y, <string>payload.id, game.io);
         game.entities.push(eggBoy);
         game.io.sockets.emit('player joined', payload);
