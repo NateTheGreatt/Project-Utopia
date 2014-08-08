@@ -71,6 +71,7 @@ describe('game server', function() {
 			// get random direction from array
 			var dirKey = Math.floor(Math.random()*3);
 			
+			// store key presses for later, after the server applies them
 			array.push(movements[dirKey]);
 			
 			// send randomly generated key presses to server
