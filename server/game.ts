@@ -9,11 +9,13 @@ class Game {
   clients: Player[];
   entities: Entity[];
   io: any;
+  lastProcessedInput: number[];
   
   constructor(socketServer) {
     this.io = socketServer;
     this.clients = [];
     this.entities = [];
+    this.lastProcessedInput = [];
     
     this.setEventHandlers();
   }
@@ -32,7 +34,11 @@ class Game {
       client.on('newPlayer', function(payload) {
         var eggBoy: Entity = new Entity(payload.x, payload.y, payload.width, payload.height, <string>payload.id, game.io);
         game.entities.push(eggBoy);
+        
+        // tell all players on server that a new player joined
         client.broadcast.emit('player joined', payload);
+        
+        // send all other players on server to the new player
         for(var i=0;i<game.entities.length;i++) {
           var e = game.entities[i];
           if(e.id != client.id) client.emit('player joined', {id: e.id, x: e.x, y: e.y});
@@ -40,7 +46,7 @@ class Game {
       });
       client.on('movePlayer', function(payload) {
         var player = game.entityById(payload.id);
-        player.direct(payload);
+        if(player != undefined) player.addInput(payload.input);
       });
 
     });

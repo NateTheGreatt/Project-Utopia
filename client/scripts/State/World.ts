@@ -13,12 +13,15 @@ module ProjectUtopia.State {
       this.worldGroup = this.game.add.group();
       for(var i=0;i<100;i++) this.entityPool.push(new Entity.Entity(this.game,0,0,'entity'));
       this.player = new Entity.Player(this.game, 10, 10);
+      
+      this.worldGroup.add(this.player);
 
       this.setEventHandlers();
     }
 
     update() {
     	this.scanEntityPool();
+      this.worldGroup.sort('y', Phaser.Group.SORT_ASCENDING);
     }
 
     scanEntityPool() {
@@ -50,22 +53,21 @@ module ProjectUtopia.State {
 			  		break;
 	  			}
 	  		}
-    		});
+  		});
 
     	Game.socket.on('player moved', function(data) {
-    		// console.log(data.id+' moved to ('+data.x+','+data.y+')');
+    		//console.log(data.id+' moved to ('+data.x+','+data.y+')');
     		if(data.id == Game.socket.io.engine.id) {
-    		  main.player.moveTo(data.x, data.y);
+    		  main.player.processInputs(data);
     		} else {
       		main.worldGroup.forEach(function(ent) {
       			if(data.id == ent.id) {
       			  ent.moveTo(data.x, data.y);
-      			  ent.move(data.direction);
+      			  ent.face(data.direction);
       				ent.name = data.name;
       			}
     			}, 'this', true)
     		}
-    		
       });
 
     	Game.socket.on('remove player', function(data) {
@@ -77,5 +79,6 @@ module ProjectUtopia.State {
   			}, 'this', true);
   		});
 		}
+		
   }
 }

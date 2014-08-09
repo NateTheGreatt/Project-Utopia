@@ -1,6 +1,6 @@
 var Entity = (function () {
     function Entity(x, y, width, height, id, io) {
-        this.speed = 3;
+        this.speed = 50;
         this.x = x;
         this.y = y;
         this.width = width;
@@ -9,23 +9,47 @@ var Entity = (function () {
         this.io = io;
         console.log('Entity ' + id + ' entered the world at (' + x + ',' + y + ')');
 
-        this.xMove = 0;
-        this.yMove = 0;
+        this.pendingInputs = [];
     }
     Entity.prototype.moveTo = function (x, y) {
         this.x = x;
         this.y = y;
     };
 
-    Entity.prototype.direct = function (directions) {
-        if (directions.up)
-            this.yMove--;
-        if (directions.down)
-            this.yMove++;
-        if (directions.left)
-            this.xMove--;
-        if (directions.right)
-            this.xMove++;
+    Entity.prototype.addInput = function (input) {
+        this.pendingInputs.push(input);
+    };
+
+    Entity.prototype.applyInput = function (input) {
+        this.lastProcessedInput = input.sequenceNumber;
+        var distance = this.speed * input.deltaTime;
+        if (input.up) {
+            this.facing = 'up';
+            this.y -= distance;
+        }
+        if (input.down) {
+            this.facing = 'down';
+            this.y += distance;
+        }
+        if (input.left) {
+            this.facing = 'left';
+            this.x -= distance;
+        }
+        if (input.right) {
+            this.facing = 'right';
+            this.x += distance;
+        }
+    };
+
+    Entity.prototype.processInputs = function () {
+        while (true) {
+            var input = this.pendingInputs.pop();
+
+            if (input == undefined)
+                break;
+            else
+                this.applyInput(input);
+        }
     };
 
     Entity.prototype.setName = function (n) {
@@ -33,53 +57,13 @@ var Entity = (function () {
     };
 
     Entity.prototype.update = function () {
-        this.applyMovement();
+        this.processInputs();
+        this.worldBounds();
+        this.sendWorldState();
     };
 
-    Entity.prototype.applyMovement = function () {
-        var data = {
-            x: 0,
-            y: 0,
-            id: this.id,
-            direction: {
-                up: false,
-                down: false,
-                left: false,
-                right: false
-            }
-        };
-        var changed = false;
-
-        if (this.yMove < 0) {
-            this.y -= this.speed;
-            this.yMove++;
-            changed = true;
-            data.direction.up = true;
-        } else if (this.yMove > 0) {
-            this.y += this.speed;
-            this.yMove--;
-            changed = true;
-            data.direction.down = true;
-        }
-
-        if (this.xMove < 0) {
-            this.x -= this.speed;
-            this.xMove++;
-            changed = true;
-            data.direction.left = true;
-        } else if (this.xMove > 0) {
-            this.x += this.speed;
-            this.xMove--;
-            changed = true;
-            data.direction.right = true;
-        }
-
-        this.worldBounds();
-        if (changed) {
-            data.x = this.x;
-            data.y = this.y;
-            this.io.sockets.emit('player moved', data);
-        }
+    Entity.prototype.sendWorldState = function () {
+        this.io.sockets.emit('player moved', this.packet());
     };
 
     Entity.prototype.worldBounds = function () {
@@ -98,7 +82,27 @@ var Entity = (function () {
     };
 
     Entity.prototype.packet = function () {
-        return {};
+        var packet = {
+            x: this.x,
+            y: this.y,
+            id: this.id,
+            sequenceNumber: this.lastProcessedInput,
+            direction: {
+                up: false,
+                down: false,
+                left: false,
+                right: false
+            }
+        };
+        if (this.facing == 'up')
+            packet.direction.up = true;
+        if (this.facing == 'down')
+            packet.direction.down = true;
+        if (this.facing == 'left')
+            packet.direction.left = true;
+        if (this.facing == 'right')
+            packet.direction.right = true;
+        return packet;
     };
     return Entity;
 })();

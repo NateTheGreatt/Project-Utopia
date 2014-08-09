@@ -7,13 +7,15 @@ class Entity {
   width: number;
   height: number;
   
-  speed: number = 3;
+  speed: number = 50;
   
-  xMove: number;
-  yMove: number;
+  facing: string;
   
   id: string;
   name: string;
+  
+  pendingInputs: any[];
+  lastProcessedInput: number;
   
   io: any;
   
@@ -26,8 +28,7 @@ class Entity {
     this.io = io;
     console.log('Entity '+id+' entered the world at ('+x+','+y+')');
     
-    this.xMove = 0;
-    this.yMove = 0;
+    this.pendingInputs = [];
   }
   
   moveTo(x:number, y:number) {
@@ -35,11 +36,39 @@ class Entity {
     this.y = y;
   }
   
-  direct(directions) {
-    if(directions.up) this.yMove--;
-    if(directions.down) this.yMove++;
-    if(directions.left) this.xMove--;
-    if(directions.right) this.xMove++;
+  addInput(input) {
+    this.pendingInputs.push(input);
+  }
+  
+  applyInput(input) {
+    this.lastProcessedInput = input.sequenceNumber;
+    var distance = this.speed*input.deltaTime;
+    if(input.up) {
+      this.facing = 'up';
+      this.y -= distance;
+    }
+    if(input.down) {
+      this.facing = 'down';
+      this.y += distance;
+    }
+    if(input.left) {
+      this.facing = 'left';
+      this.x -= distance;
+    }
+    if(input.right) {
+      this.facing = 'right';
+      this.x += distance;
+    }
+    // console.log(this.x, this.y);
+  }
+  
+  processInputs() {
+    while(true) {
+      var input = this.pendingInputs.pop();
+      // TODO: verify input before applying
+      if(input == undefined) break;
+      else this.applyInput(input);
+    }
   }
   
   setName(n) {
@@ -47,57 +76,16 @@ class Entity {
   }
   
   update() {
-    this.applyMovement();
+    this.processInputs();
+    this.worldBounds();
+    this.sendWorldState();
+    // this.applyMovement();
   }
   
-  applyMovement() {
-    var data = {
-      x: 0,
-      y: 0,
-      id: this.id,
-      direction: {
-        up: false,
-        down: false,
-        left: false,
-        right: false,
-      }
-    };
-    var changed = false;
-    
-    // up
-    if(this.yMove < 0) {
-      this.y -= this.speed;
-      this.yMove++;
-      changed = true;
-      data.direction.up = true;
-    } else if(this.yMove > 0) { // down
-      this.y += this.speed;
-      this.yMove--;
-      changed = true;
-      data.direction.down = true;
-    }
-    
-    // left
-    if(this.xMove < 0) {
-      this.x -= this.speed;
-      this.xMove++;
-      changed = true;
-      data.direction.left = true;
-    } else if(this.xMove > 0) { // right
-      this.x += this.speed;
-      this.xMove--;
-      changed = true;
-      data.direction.right = true;
-    }
-    
-    this.worldBounds();
-    
-    if(changed) {
-      //console.log(this.id, this.x, this.y);
-      data.x = this.x;
-      data.y = this.y;
-      this.io.sockets.emit('player moved', data);
-    }
+  sendWorldState() {
+    //console.log(this.packet());
+    // TODO: detect if any inputs were processed during this game loop before sending packet
+    this.io.sockets.emit('player moved', this.packet());
   }
   
   worldBounds() {
@@ -116,7 +104,23 @@ class Entity {
   }
   
   packet() {
-    return {};
+    var packet = {
+      x: this.x,
+      y: this.y,
+      id: this.id,
+      sequenceNumber: this.lastProcessedInput,
+      direction: {
+        up: false,
+        down: false,
+        left: false,
+        right: false
+      }
+    };
+    if(this.facing == 'up') packet.direction.up = true;
+    if(this.facing == 'down') packet.direction.down = true;
+    if(this.facing == 'left') packet.direction.left = true;
+    if(this.facing == 'right') packet.direction.right = true;
+    return packet;
   }
 }
 

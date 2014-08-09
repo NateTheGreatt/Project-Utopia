@@ -18,9 +18,9 @@ module ProjectUtopia.Entity {
     
     moved: number;
     
-    speed: number = 5;
+    speed: number = 50;
     
-    fps: number = 15;
+    fps: number = 10;
     
     constructor(game:Phaser.Game, x:number, y:number, id:string, name:string = 'Entity') {
       super(game,x,y,'entity');
@@ -45,6 +45,8 @@ module ProjectUtopia.Entity {
     }
     
     update() {
+      
+      
       if(this.moved == 0) {
         if(this.facing == 'up') this.animations.play('idleUp');
         if(this.facing == 'down') this.animations.play('idleDown');
@@ -53,27 +55,29 @@ module ProjectUtopia.Entity {
       }
       
       if(this.moved > 0) {
+        console.log(this.moved);
         if(this.facing == 'up') this.animations.play('walkUp');
         if(this.facing == 'down') this.animations.play('walkDown');
         if(this.facing == 'left') this.animations.play('walkLeft');
         if(this.facing == 'right') this.animations.play('walkRight');
         this.moved--;
       }
-      
-      // don't let this number get too high or else it will continue the walking
-      // animation even though the sprite isn't moving
-      if(this.moved > 6) this.moved = 6;
     }
     
     moveTo(x:number, y:number) {
-      // add 3 to moved because the client FPS is faster than the server's
-      // so it will deduct from moved a lot faster
-      this.moved += 3;
-      this.x = x;
-      this.y = y;
+      if(this.x != x || this.y != y) {
+        // add 3 to moved because the client FPS is faster than the server's
+        // so it will deduct from moved a lot faster
+        this.moved += 5;
+        // don't let this number get too high or else it will continue the walking
+        // animation even though the sprite isn't moving
+        if(this.moved > 5) this.moved = 5;
+        this.x = x;
+        this.y = y;
+      }
     }
     
-    move(direction) {
+    face(direction) {
       if(direction.up) {
         this.facing = 'up';
       }

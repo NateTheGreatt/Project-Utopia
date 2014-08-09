@@ -5,6 +5,11 @@ module ProjectUtopia.Entity {
     downKey: any;
     leftKey: any;
     rightKey: any;
+    
+    inputSequenceNumber: number;
+    pendingInputs: any[];
+    
+    last_ts: number;
 
 
     constructor(game: Phaser.Game, x: number, y: number) {
@@ -18,8 +23,11 @@ module ProjectUtopia.Entity {
       this.rightKey = this.game.input.keyboard.addKey(Phaser.Keyboard.D);
 
       this.exists = true;
-      game.add.existing(this);
-
+      //game.worldGroup.add.existing(this);
+      
+      this.inputSequenceNumber = 0;
+      this.pendingInputs = [];
+      
       Game.socket.emit('newPlayer', this.packet());
     }
 
@@ -39,35 +47,31 @@ module ProjectUtopia.Entity {
     controls() {
 
       if(this.upKey.isDown || this.downKey.isDown || this.leftKey.isDown || this.rightKey.isDown) {
+        this.inputSequenceNumber++;
+        
+        var dt = this.game.time.elapsed/1000;
+        
+        var input = {
+          id: this.id,
+          deltaTime: dt,
+          up: false,
+          down: false,
+          left: false,
+          right: false,
+          sequenceNumber: this.inputSequenceNumber
+        };
+        if(this.upKey.isDown) input.up = true;
+        if(this.downKey.isDown) input.down = true;
+        if(this.leftKey.isDown) input.left = true;
+        if(this.rightKey.isDown) input.right = true;
+        
         Game.socket.emit('movePlayer', {
           id: this.id,
-          up: this.upKey.isDown,
-          down: this.downKey.isDown,
-          left: this.leftKey.isDown,
-          right: this.rightKey.isDown
+          input: input
         });
-        
-        if(this.upKey.isDown) {
-          // this.animations.play('walkUp');
-          this.facing = 'up';
-        }
-        else if(this.downKey.isDown) {
-          // this.animations.play('walkDown');
-          this.facing = 'down';
-        }
-        else if(this.leftKey.isDown) {
-          // this.animations.play('walkLeft');
-          this.facing = 'left';
-        }
-        else if(this.rightKey.isDown) {
-          // this.animations.play('walkRight');
-          this.facing = 'right';
-        }
-      } else {
-        /*if(this.facing == 'up') this.animations.play('idleUp');
-        if(this.facing == 'down') this.animations.play('idleDown');
-        if(this.facing == 'left') this.animations.play('idleLeft');
-        if(this.facing == 'right') this.animations.play('idleRight');*/
+        this.applyInput(input);
+        // add to pending to be reconciled
+        this.pendingInputs.push(input);
       }
 
       if(this.game.input.mousePointer.isDown) {
@@ -76,9 +80,74 @@ module ProjectUtopia.Entity {
       
 
     }
+    
+    processInputs(payload) {
+      var j = 0;
+      while (j < this.pendingInputs.length) {
+        var input = this.pendingInputs[j];
+        if(input != undefined) {
+          if (input.sequenceNumber <= payload.sequenceNumber) {
+            // Already processed. Its effect is already taken into account
+            // into the world update we just got, so we can drop it.
+            this.pendingInputs.splice(j, 1);
+          } else {
+            // Not processed by the server yet. Re-apply it.
+            this.applyServerInput(input, payload);
+            j++;
+          }
+        }
+      }
+    }
+    
+    applyServerInput(input, payload) {
+      this.moveTo(payload.x, payload.y);
+      if(input.up) {
+        this.facing = 'up';
+      }
+      else if(input.down) {
+        this.facing = 'down';
+      }
+      else if(input.left) {
+        this.facing = 'left';
+      }
+      else if(input.right) {
+        this.facing = 'right';
+      }
+    }
+    
+    applyInput(input) {
+      if(input.up) {
+        // this.animations.play('walkUp');
+        this.facing = 'up';
+        this.y -= this.speed*input.deltaTime;
+      }
+      else if(input.down) {
+        // this.animations.play('walkDown');
+        this.facing = 'down';
+        this.y += this.speed*input.deltaTime;
+      }
+      else if(input.left) {
+        // this.animations.play('walkLeft');
+        this.facing = 'left';
+        this.x -= this.speed*input.deltaTime;
+      }
+      else if(input.right) {
+        // this.animations.play('walkRight');
+        this.facing = 'right';
+        this.x += this.speed*input.deltaTime;
+      }
+      this.moved += 1;
+    }
 
     packet() {
-      return {x: this.x, y: this.y, width: this.width, height: this.height, id: Game.socket.io.engine.id, name: this.name};
+      return {
+        x: this.x, 
+        y: this.y, 
+        width: this.width, 
+        height: this.height, 
+        id: this.id, 
+        name: this.name
+      };
     }
   }
 }

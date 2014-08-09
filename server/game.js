@@ -8,6 +8,7 @@ var Game = (function () {
         this.io = socketServer;
         this.clients = [];
         this.entities = [];
+        this.lastProcessedInput = [];
 
         this.setEventHandlers();
     }
@@ -25,7 +26,9 @@ var Game = (function () {
             client.on('newPlayer', function (payload) {
                 var eggBoy = new Entity(payload.x, payload.y, payload.width, payload.height, payload.id, game.io);
                 game.entities.push(eggBoy);
+
                 client.broadcast.emit('player joined', payload);
+
                 for (var i = 0; i < game.entities.length; i++) {
                     var e = game.entities[i];
                     if (e.id != client.id)
@@ -34,7 +37,8 @@ var Game = (function () {
             });
             client.on('movePlayer', function (payload) {
                 var player = game.entityById(payload.id);
-                player.direct(payload);
+                if (player != undefined)
+                    player.addInput(payload.input);
             });
         });
     };
