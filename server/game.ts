@@ -30,7 +30,7 @@ class Game {
         client.broadcast.emit('remove player', {id: client.id});
       });
       client.on('newPlayer', function(payload) {
-        var eggBoy: Entity = new Entity(payload.x, payload.y, <string>payload.id, game.io);
+        var eggBoy: Entity = new Entity(payload.x, payload.y, payload.width, payload.height, <string>payload.id, game.io);
         game.entities.push(eggBoy);
         client.broadcast.emit('player joined', payload);
         for(var i=0;i<game.entities.length;i++) {

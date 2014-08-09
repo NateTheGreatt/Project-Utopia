@@ -23,7 +23,7 @@ var Game = (function () {
                 client.broadcast.emit('remove player', { id: client.id });
             });
             client.on('newPlayer', function (payload) {
-                var eggBoy = new Entity(payload.x, payload.y, payload.id, game.io);
+                var eggBoy = new Entity(payload.x, payload.y, payload.width, payload.height, payload.id, game.io);
                 game.entities.push(eggBoy);
                 client.broadcast.emit('player joined', payload);
                 for (var i = 0; i < game.entities.length; i++) {

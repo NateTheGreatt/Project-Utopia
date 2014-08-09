@@ -19,7 +19,7 @@ server.listen(process.env.PORT, process.env.IP);
 
 console.log('Server started');
 
-var tickLengthMs = 1000 / 20;
+var tickLengthMs = 1000 / 30;
 
 var previousTick = Date.now();
 

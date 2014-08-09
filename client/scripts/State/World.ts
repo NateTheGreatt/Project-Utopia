@@ -23,12 +23,11 @@ module ProjectUtopia.State {
 
     scanEntityPool() {
     	for(var i=this.entityPool.length-1;i>=0;i--) {
-    		if(this.entityPool[i].exists) this.spawnEntity(i);
+    		if(this.entityPool[i].exists) this.spawnEntityFromPool(i);
     	}
     }
 
-    spawnEntity(i) {
- 			//this.entityPool[i].reset();
+    spawnEntityFromPool(i) {
  			this.worldGroup.add(this.entityPool.splice(i,1)[0]);
     }
 
@@ -56,13 +55,12 @@ module ProjectUtopia.State {
     	Game.socket.on('player moved', function(data) {
     		// console.log(data.id+' moved to ('+data.x+','+data.y+')');
     		if(data.id == Game.socket.io.engine.id) {
-    		  main.player.x = data.x;
-    		  main.player.y = data.y;
+    		  main.player.moveTo(data.x, data.y);
     		} else {
       		main.worldGroup.forEach(function(ent) {
       			if(data.id == ent.id) {
-      				ent.x = data.x;
-      				ent.y = data.y;
+      			  ent.moveTo(data.x, data.y);
+      			  ent.move(data.direction);
       				ent.name = data.name;
       			}
     			}, 'this', true)

@@ -7,6 +7,7 @@ module ProjectUtopia.State {
       this.load.setPreloadSprite(this.preloadBar);
 
       this.load.image('menu-background', 'assets/images/menu-background.png');
+      this.load.spritesheet('entity', 'assets/images/male_walkcycle.png', 64, 64, 36);
       
       // Load remaining assets here
     }

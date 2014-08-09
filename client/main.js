@@ -12,12 +12,75 @@ var ProjectUtopia;
             function Entity(game, x, y, id, name) {
                 if (typeof name === "undefined") { name = 'Entity'; }
                 _super.call(this, game, x, y, 'entity');
+                this.speed = 5;
+                this.fps = 15;
                 this.game = game;
                 this.id = id;
                 this.name = name;
                 this.exists = false;
+                this.width = 64;
+                this.height = 64;
+
+                this.moved = 0;
+
+                this.animations.add('walkUp', [0, 1, 2, 3, 4, 5, 6, 7, 8], this.fps, true);
+                this.animations.add('walkLeft', [9, 10, 11, 12, 13, 14, 15, 16, 17], this.fps, true);
+                this.animations.add('walkDown', [18, 19, 20, 21, 22, 23, 24, 25, 26], this.fps, true);
+                this.animations.add('walkRight', [27, 28, 29, 30, 31, 32, 33, 34, 35], this.fps, true);
+                this.animations.add('idleUp', [0], this.fps, true);
+                this.animations.add('idleDown', [18], this.fps, true);
+                this.animations.add('idleLeft', [9], this.fps, true);
+                this.animations.add('idleRight', [27], this.fps, true);
             }
             Entity.prototype.update = function () {
+                if (this.moved == 0) {
+                    if (this.facing == 'up')
+                        this.animations.play('idleUp');
+                    if (this.facing == 'down')
+                        this.animations.play('idleDown');
+                    if (this.facing == 'left')
+                        this.animations.play('idleLeft');
+                    if (this.facing == 'right')
+                        this.animations.play('idleRight');
+                    console.log('idle');
+                }
+
+                if (this.moved > 0) {
+                    if (this.facing == 'up')
+                        this.animations.play('walkUp');
+                    if (this.facing == 'down')
+                        this.animations.play('walkDown');
+                    if (this.facing == 'left')
+                        this.animations.play('walkLeft');
+                    if (this.facing == 'right')
+                        this.animations.play('walkRight');
+                    this.moved--;
+                    console.log('moving');
+                }
+
+                if (this.moved > 6)
+                    this.moved = 6;
+            };
+
+            Entity.prototype.moveTo = function (x, y) {
+                this.moved += 3;
+                this.x = x;
+                this.y = y;
+            };
+
+            Entity.prototype.move = function (direction) {
+                if (direction.up) {
+                    this.facing = 'up';
+                }
+                if (direction.down) {
+                    this.facing = 'down';
+                }
+                if (direction.left) {
+                    this.facing = 'left';
+                }
+                if (direction.right) {
+                    this.facing = 'right';
+                }
             };
             return Entity;
         })(Phaser.Sprite);
@@ -54,9 +117,6 @@ var ProjectUtopia;
                 if (htmlName != this.name)
                     this.name = htmlName;
 
-                this.prevX = this.x;
-                this.prevY = this.y;
-
                 _super.prototype.update.call(this);
             };
 
@@ -73,6 +133,17 @@ var ProjectUtopia;
                         left: this.leftKey.isDown,
                         right: this.rightKey.isDown
                     });
+
+                    if (this.upKey.isDown) {
+                        this.facing = 'up';
+                    } else if (this.downKey.isDown) {
+                        this.facing = 'down';
+                    } else if (this.leftKey.isDown) {
+                        this.facing = 'left';
+                    } else if (this.rightKey.isDown) {
+                        this.facing = 'right';
+                    }
+                } else {
                 }
 
                 if (this.game.input.mousePointer.isDown) {
@@ -80,7 +151,7 @@ var ProjectUtopia;
             };
 
             Player.prototype.packet = function () {
-                return { x: this.x, y: this.y, id: ProjectUtopia.Game.socket.io.engine.id, name: this.name };
+                return { x: this.x, y: this.y, width: this.width, height: this.height, id: ProjectUtopia.Game.socket.io.engine.id, name: this.name };
             };
             return Player;
         })(Entity.Entity);
@@ -124,6 +195,7 @@ var ProjectUtopia;
                 this.load.setPreloadSprite(this.preloadBar);
 
                 this.load.image('menu-background', 'assets/images/menu-background.png');
+                this.load.spritesheet('entity', 'assets/images/male_walkcycle.png', 64, 64, 36);
             };
 
             Preload.prototype.create = function () {
@@ -184,11 +256,11 @@ var ProjectUtopia;
             World.prototype.scanEntityPool = function () {
                 for (var i = this.entityPool.length - 1; i >= 0; i--) {
                     if (this.entityPool[i].exists)
-                        this.spawnEntity(i);
+                        this.spawnEntityFromPool(i);
                 }
             };
 
-            World.prototype.spawnEntity = function (i) {
+            World.prototype.spawnEntityFromPool = function (i) {
                 this.worldGroup.add(this.entityPool.splice(i, 1)[0]);
             };
 
@@ -214,13 +286,12 @@ var ProjectUtopia;
 
                 ProjectUtopia.Game.socket.on('player moved', function (data) {
                     if (data.id == ProjectUtopia.Game.socket.io.engine.id) {
-                        main.player.x = data.x;
-                        main.player.y = data.y;
+                        main.player.moveTo(data.x, data.y);
                     } else {
                         main.worldGroup.forEach(function (ent) {
                             if (data.id == ent.id) {
-                                ent.x = data.x;
-                                ent.y = data.y;
+                                ent.moveTo(data.x, data.y);
+                                ent.move(data.direction);
                                 ent.name = data.name;
                             }
                         }, 'this', true);
@@ -247,7 +318,7 @@ var ProjectUtopia;
     var Game = (function (_super) {
         __extends(Game, _super);
         function Game(socket) {
-            _super.call(this, 640, 480, Phaser.AUTO, 'game-div');
+            _super.call(this, 640, 480, Phaser.CANVAS, 'game-div');
 
             this.state.add('boot', ProjectUtopia.State.Boot);
             this.state.add('preload', ProjectUtopia.State.Preload);

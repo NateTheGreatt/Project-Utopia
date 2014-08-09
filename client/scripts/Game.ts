@@ -7,7 +7,10 @@ module ProjectUtopia {
     static socket: any;
     
     constructor(socket) {
-      super(640, 480, Phaser.AUTO, 'game-div');
+      // var w = window.innerWidth * window.devicePixelRatio,
+      //     h = window.innerHeight * window.devicePixelRatio;
+      // super(w, h, Phaser.AUTO, 'game-div');
+      super(640, 480, Phaser.CANVAS, 'game-div');
 
       this.state.add('boot', State.Boot);
       this.state.add('preload', State.Preload);

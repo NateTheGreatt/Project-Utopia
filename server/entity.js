@@ -1,18 +1,16 @@
 var Entity = (function () {
-    function Entity(x, y, id, io) {
-        this.width = 20;
-        this.height = 20;
-        this.speed = 5;
+    function Entity(x, y, width, height, id, io) {
+        this.speed = 3;
         this.x = x;
         this.y = y;
+        this.width = width;
+        this.height = height;
         this.id = id;
         this.io = io;
         console.log('Entity ' + id + ' entered the world at (' + x + ',' + y + ')');
 
-        this.up = 0;
-        this.down = 0;
-        this.left = 0;
-        this.right = 0;
+        this.xMove = 0;
+        this.yMove = 0;
     }
     Entity.prototype.moveTo = function (x, y) {
         this.x = x;
@@ -21,13 +19,13 @@ var Entity = (function () {
 
     Entity.prototype.direct = function (directions) {
         if (directions.up)
-            this.up++;
+            this.yMove--;
         if (directions.down)
-            this.down++;
+            this.yMove++;
         if (directions.left)
-            this.left++;
+            this.xMove--;
         if (directions.right)
-            this.right++;
+            this.xMove++;
     };
 
     Entity.prototype.setName = function (n) {
@@ -39,34 +37,63 @@ var Entity = (function () {
     };
 
     Entity.prototype.applyMovement = function () {
+        var data = {
+            x: 0,
+            y: 0,
+            id: this.id,
+            direction: {
+                up: false,
+                down: false,
+                left: false,
+                right: false
+            }
+        };
         var changed = false;
-        if (this.up > 0) {
+
+        if (this.yMove < 0) {
             this.y -= this.speed;
-            this.up--;
+            this.yMove++;
             changed = true;
-            console.log('up');
-        }
-        if (this.down > 0) {
+            data.direction.up = true;
+        } else if (this.yMove > 0) {
             this.y += this.speed;
-            this.down--;
+            this.yMove--;
             changed = true;
-            console.log('down');
+            data.direction.down = true;
         }
-        if (this.left > 0) {
+
+        if (this.xMove < 0) {
             this.x -= this.speed;
-            this.left--;
+            this.xMove++;
             changed = true;
-            console.log('left');
-        }
-        if (this.right > 0) {
+            data.direction.left = true;
+        } else if (this.xMove > 0) {
             this.x += this.speed;
-            this.right--;
+            this.xMove--;
             changed = true;
-            console.log('right');
+            data.direction.right = true;
         }
+
+        this.worldBounds();
         if (changed) {
-            console.log(this.id, this.x, this.y);
-            this.io.sockets.emit('player moved', { x: this.x, y: this.y, id: this.id });
+            data.x = this.x;
+            data.y = this.y;
+            this.io.sockets.emit('player moved', data);
+        }
+    };
+
+    Entity.prototype.worldBounds = function () {
+        if (this.x + this.width > 640) {
+            this.x = 640 - this.width;
+        }
+        if (this.x <= 0) {
+            this.x = 0;
+        }
+        if (this.y + this.height > 480) {
+            this.y = 480 - this.height;
+        }
+        if (this.y <= 0) {
+            this.y = 0;
         }
     };
 
